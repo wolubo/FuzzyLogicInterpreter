@@ -1,0 +1,183 @@
+// Lösung für Aufgabe 6 aus dem Skript "Soft Computing Modul 2: Fuzzy-Mengenlehre und Fuzzy-Logik".
+// Dieses Skript berrechnet die nachzubestellende Menge für die Waren a, b, c, d und e auf Basis der aktuellen Lagerbestände und der Nachfrage am Vortag.
+
+print "";
+print "Bestellmengen berrechnen";
+print "";
+print "Eingangsdaten";
+
+// Anzahl der Einheiten, die das Lager maximal aufnehmen kann.
+LAGERKAPAZITAET := 1000;
+print "Lagerkapazität:           " & LAGERKAPAZITAET & " Einheiten";
+
+// Anzahl der Einheiten, die jeweils auf Lager sind.
+$BESTAND :=  { (a,500), (b,300), (c,15), (d,3), (e,15) };
+print "akt. Lagerbestand:        " & $BESTAND;
+
+// Anzahl der am Vortag verkauften Einheiten.
+$VERKAUFT := { (a,13),  (b,215), (c,8),  (d,9), (e,85) };
+print "Verkäufe des Vortags:     " & $VERKAUFT;
+print "";
+
+// Relative Lagerbestände ermitteln. 
+$BEWBESTAND := {};
+$RELBESTAND := #{};
+for each X from $BESTAND do
+begin
+	E := left(X);	// Ware
+	R := right(X) / LAGERKAPAZITAET; // Berechne den relativen Bestand der Ware aus dem rechten Teil des Bestands-Paares und der maximalen Lagerkapazität.
+
+	if( R <  0.1 )               then begin B := sehr_gering; end
+	if( R >= 0.1  and R < 0.25 ) then begin B := gering;      end 
+	if( R >= 0.25 and R < 0.5  ) then begin	B := mittel;      end 
+	if( R >= 0.5  and R < 0.75 ) then begin B := hoch; 		  end 
+	if( R >= 0.75 )              then begin B := sehr_hoch;   end
+
+	FE := fuzzy_element(E,R);  // Erzeuge ein neues Fuzzy-Element aus dem linken Teil des aktuellen Bestands-Paares und dem errechneten relativen Bestand für die Ware.
+	SE := pair_element(E,B);
+	add FE as element to set $RELBESTAND;
+	add SE as element to set $BEWBESTAND;
+end
+
+// Nachfrage bewerten (relativ zum Lagerbestand).
+$RELNACHFRAGE := #{};
+$BEWNACHFRAGE := {};
+$X := ( create cartesian product of $VERKAUFT and $BESTAND );
+for each X from $X where left(left(X))==left(right(X)) do
+begin
+	// relative Nachfrage ermitteln
+	E  := left(left(X));		// Ware
+	VE := right(left(X));		// Anzahl der verkauften Einheiten.
+	GE := right(right(X)) + VE; // Lagerbestand am Vortag. 
+	R  := VE / GE;				// Relative Nachfrage.
+
+	FE := fuzzy_element(E, R);
+	add FE as element to set $RELNACHFRAGE;
+	
+	// Nachfrage bewerten
+	if( R <  0.1 )               then begin B := sehr_gering; end
+	if( R >= 0.1  and R < 0.25 ) then begin B := gering;      end 
+	if( R >= 0.25 and R < 0.5  ) then begin	B := mittel;      end 
+	if( R >= 0.5  and R < 0.75 ) then begin B := hoch; 		  end 
+	if( R >= 0.75 )              then begin B := sehr_hoch;   end
+
+	SE := pair_element(E,B);
+	add SE as element to set $BEWNACHFRAGE;
+end
+
+// Bedarf ermitteln
+$BEWBEDARF := {};
+$X := ( create cartesian product of $BEWNACHFRAGE and $BEWBESTAND );
+for each X from $X where left(left(X))==left(right(X)) do
+begin
+	E  := left(left(X));		// Ware
+	N  := right(left(X));	// Bewertung der Nachfrage.
+	LB := right(right(X));	// Bewertung des Bestands.
+	
+	if(N==sehr_gering) then begin 
+		B := keiner;
+		if(LB==sehr_gering) then begin B := gering; end 
+	end 
+	
+	if(N==gering) then begin
+		if(LB==sehr_gering) then begin B := mittel; end 
+		if(LB==gering)      then begin B := gering;	end 
+		if(LB==mittel) 		then begin B := keiner;	end  
+		if(LB==hoch) 		then begin B := keiner; end
+		if(LB==sehr_hoch) 	then begin B := keiner; end
+	end 
+	
+	if(N==mittel) then begin
+		if(LB==sehr_gering) then begin B := hoch;   end 
+		if(LB==gering)      then begin B := mittel;	end 
+		if(LB==mittel) 		then begin B := gering;	end  
+		if(LB==hoch) 		then begin B := keiner; end
+		if(LB==sehr_hoch) 	then begin B := keiner; end
+	end
+	
+	if(N==hoch) then begin
+		if(LB==sehr_gering) then begin B := sehr_hoch; end 
+		if(LB==gering)      then begin B := hoch;	   end 
+		if(LB==mittel) 		then begin B := hoch;	   end  
+		if(LB==hoch) 		then begin B := mittel;    end
+		if(LB==sehr_hoch) 	then begin B := gering;    end
+	end 
+
+	if(N==sehr_hoch) then begin
+		if(LB==sehr_gering) then begin B := sehr_hoch; end 
+		if(LB==gering)      then begin B := sehr_hoch; end 
+		if(LB==mittel) 		then begin B := hoch;	   end  
+		if(LB==hoch) 		then begin B := hoch;      end
+		if(LB==sehr_hoch) 	then begin B := mittel;    end
+	end
+	
+	SE := pair_element(E,B);
+	add SE as element to set $BEWBEDARF;
+end
+
+// Defuzzifizieren
+$BESTELL_FAKTOR := {};
+for each X from $BEWBEDARF do
+begin
+	E := left(X);	// Ware
+	B := right(X);	// Bewertung
+
+	if(B==keiner)    then begin MENGE := 0.0; end // Nichts nachbestellen.
+	if(B==gering)    then begin MENGE := 0.1; end // 10% der verkauften Menge nachbestellen.
+	if(B==mittel)    then begin MENGE := 0.5; end // 50% der verkauften Menge nachbestellen.
+	if(B==hoch)      then begin MENGE := 1.0; end // Verkaufte Menge nachbestellen.
+	if(B==sehr_hoch) then begin MENGE := 1.5; end // Das anderthalbfache der verkauften Menge nachbestellen.
+
+	SE := pair_element(E,MENGE);
+	add SE as element to set $BESTELL_FAKTOR;
+end
+
+// Bestellmengen ermitteln
+$ANFORDERUNG := {};
+SUMME := 0;
+$X := ( create cartesian product of $BESTELL_FAKTOR and $VERKAUFT );
+for each X from $X where left(left(X))==left(right(X)) do
+begin
+	E := left(left(X));	// Ware
+	F := right(left(X));	// Bestell-Faktor.
+	V := right(right(X));	// verkaufte Menge.
+	A := round(F * V, 0);
+	SE := pair_element(E, A);
+	add SE as element to set $ANFORDERUNG;
+	SUMME := SUMME + A;
+end
+
+REST_KAPAZITAET := round(( 1 - get absolute value of $RELBESTAND ) * LAGERKAPAZITAET, 0);
+
+print "Verarbeitungsdaten";
+print "bewerteter Lagerbestand:  " & $BEWBESTAND;
+print "bewertete Nachfrage:      " & $BEWNACHFRAGE;
+print "bewerteter Bedarf:        " & $BEWBEDARF;
+print "Bestell-Anforderung:      " & $ANFORDERUNG;
+print "Bestell-Anforderung:      " & SUMME & " Einheiten";
+print "Restkapazität des Lagers: " & REST_KAPAZITAET & " Einheiten";
+
+// Reicht die restliche Lagerkapazität aus?
+if(SUMME<=REST_KAPAZITAET) then begin
+	$BESTELLUNG := $ANFORDERUNG;
+end
+else begin
+	// Kapazität reicht nicht. Bestellung muss angepasst werden.
+	print "Die Lagerkapazität reicht nicht. Die Bestellung muss daher angepasst werden.";
+	FAKTOR := REST_KAPAZITAET / SUMME;
+	$BESTELLUNG := {};
+	for each X from $ANFORDERUNG do
+	begin
+		E := left(X);	// Ware
+		A := right(X);	// angeforderte Menge
+		M := round(A * FAKTOR, 0);
+		SE := pair_element(E,M);
+		add SE as element to set $BESTELLUNG;
+	end
+end
+
+print "";
+print "ERGEBNIS";
+print "Bestellung: " & $BESTELLUNG;
+
+exit;

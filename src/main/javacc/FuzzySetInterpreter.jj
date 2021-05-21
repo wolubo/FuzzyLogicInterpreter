@@ -1,0 +1,979 @@
+/**
+ * JavaCC template file created by SF JavaCC plugin 1.5.28+ wizard for JavaCC 1.5.0+
+ */
+options
+{
+  JDK_VERSION = "1.8";
+  IGNORE_CASE = false;			// Generate a case-sensitive scanner.
+  static = false;				// Generate a dynamic parser.
+  //LOOKAHEAD=4;					// Look 4 tokens ahead.
+  FORCE_LA_CHECK=true;			// Force lookahead-checking
+//  DEBUG_PARSER=true;
+//  DEBUG_TOKEN_MANAGER=true;
+//  DEBUG_LOOKAHEAD=true;
+}
+
+PARSER_BEGIN(FuzzySetInterpreter)
+package de.wbongartz.fuzzy_logic_parser.parser;
+
+import java.util.ArrayList;
+import java.math.BigDecimal;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.HashMap;
+
+import de.wbongartz.fuzzy_logic_parser.set.*;
+import de.wbongartz.fuzzy_logic_parser.fuzzyset.*;
+import de.wbongartz.fuzzy_logic_parser.statements.*;
+import de.wbongartz.fuzzy_logic_parser.evaluable.*;
+import de.wbongartz.fuzzy_logic_parser.evaluable.element.*;
+import de.wbongartz.fuzzy_logic_parser.evaluable.arithmetic.*;
+import de.wbongartz.fuzzy_logic_parser.evaluable.bool.*;
+import de.wbongartz.fuzzy_logic_parser.evaluable.set.*;
+import de.wbongartz.fuzzy_logic_parser.evaluable.converter.*;
+import de.wbongartz.fuzzy_logic_parser.evaluable.compare.*;
+
+public class FuzzySetInterpreter
+{
+  private HashMap<String, Set> _setStore = new HashMap<String, Set>();
+  private HashMap<String, SetElement> _varStore = new HashMap<String, SetElement>();
+
+  public static void main(String args []) throws ParseException
+  {
+    FuzzySetInterpreter parser = null;
+    
+	if(args.length >0)
+	{
+	  	String filename = args[0];
+      	System.out.println("Reading from file " + filename);
+		BufferedReader br = null;
+		try {
+			br = new BufferedReader(new FileReader(filename));
+			StringBuilder sb = new StringBuilder();
+			String line = br.readLine();
+			while (line != null) {
+				sb.append(line + "\n");
+				line = br.readLine();
+			}
+		    parser = new FuzzySetInterpreter(new java.io.StringReader(sb.toString()));
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			if (br != null) {
+				try {
+					br.close(); // Close the reader no matter what...
+				} catch (Exception e) {
+				}
+			}
+		}
+	} else{
+	    parser = new FuzzySetInterpreter(System.in);
+		System.out.println("Reading from standard input...");
+	}
+    
+      try
+      {
+        parser.programm();
+   	      	System.out.println("Goodbye.");
+       	  	System.exit(0);
+      }
+      catch (SemanticException e)
+      {
+        String msg = e.getMessage();
+        if(msg!=null) {
+	        System.out.println("SEMANTIC ERROR: " + msg);
+        } else {
+	        System.out.println("SEMANTIC ERROR");
+        	e.printStackTrace();
+        }
+      }
+      catch (ParseException e)
+      {
+        String msg = e.getMessage();
+        if(msg!=null) {
+	        System.out.println("SYNTAX ERROR: " + msg);
+        } else {
+	        System.out.println("SYNTAX ERROR");
+        	e.printStackTrace();
+        }
+      }
+      catch (Exception e)
+      {
+        System.out.println("EXCEPTION");
+        String msg = e.getMessage();
+        if(msg!=null) 
+        	System.out.println(msg);
+        else
+        	e.printStackTrace();
+      }
+      catch (Error e)
+      {
+        System.out.println("ERROR");
+        System.out.println(e.getMessage());
+      }
+    }
+} 
+
+PARSER_END(FuzzySetInterpreter)
+
+SKIP :
+{
+  " "
+| "\r"
+| "\t"
+| "\n"
+| < "//" (~["\r", "\n"])* >
+}
+
+TOKEN :
+{
+  < DELETE : "delete" >
+| < CARTESIAN : "cartesian" >
+| < PRODUCT : "product" >
+| < INTERSECTION : "intersection" >
+| < SYMMETRIC : "symmetric" >
+| < COMPLEMENT : "complement" >
+| < UNION : "union" >
+| < IS : "is" >
+| < TO : "to" >
+| < CONTAINS : "contains" >
+| < EMPTY : "empty" >
+| < OF : "of" >
+| < WITH : "with" >
+| < AND : "and" >
+| < SUBSET : "subset" >
+| < EQUAL : "equal" >
+| < CREATE : "create" >
+| < USING : "using" >
+| < CARDINAL : "cardinal" >
+| < ABSOLUTE : "absolute" >
+| < AVERAGE : "average" >
+| < VALUE : "value" >
+| < GET : "get" >
+| < AS : "as" >
+| < ELEMENT : "element" >
+| < SET : "set" >
+| < BASIC : "basic" >
+| < EXIT : "exit" >
+| < PRINT : "print" >
+| < ADD : "add" >
+| < FOR : "for" >
+| < EACH : "each"  >
+| < FROM : "from"  >
+| < WHERE : "where" >
+| < DO : "do"  >
+| < IF : "if" >
+| < THEN : "then" >
+| < ELSE : "else" >
+| < BEGIN : "begin"  >
+| < END : "end"  >
+| < TRUE : "true" >
+| < FALSE : "false" >
+| < OR : "or" >
+| < NOT : "not" >
+| < XOR : "xor" >
+| < DECIMAL : "decimal" >
+| < RIGHT : "right" >
+| < LEFT : "left" >
+| < ROUND : "round" >
+| < FUZZY_ELEMENT : "fuzzy_element" >
+| < PAIR_ELEMENT : "pair_element" >
+}
+
+TOKEN :
+{
+  < INTEGER : (< DIGIT >)+ >
+| < #DIGIT : [ "0"-"9" ] >
+| < SET_IDENTIFIER : "$" (["A"-"Z"])+ ("_"|["A"-"Z"])* >
+| < VAR_IDENTIFIER : (["A"-"Z"])+  ("_"|["A"-"Z"])* >
+| < ELEMENT_IDENTIFIER : (["a"-"z"])+ ("_"|["a"-"z"])* >
+| < NUMBER  : (<DIGIT>)+ "." (<DIGIT>)+ >
+| < STRING : "\"" ( ~["\"","\\"] )* "\"" >
+| < S_HASH : "#" >
+| < S_SEMICOLON : ";" >
+| < S_COMMA     : "," >
+| < S_DEF       : ":=" >
+| < S_OCB       : "{" >
+| < S_CCB       : "}" >
+| < S_OB        : "(" >
+| < S_CB        : ")" >
+| < S_OSB       : "[" >
+| < S_CSB       : "]" >
+| < S_AMPERSAND : "&" >
+| < S_PLUS      : "+" >
+| < S_MINUS     : "-" >
+| < S_MULTIPLY  : "*" >
+| < S_DIVIDE    : "/" >
+| < S_GT        : ">" >
+| < S_GTOE      : ">=" >
+| < S_EQUAL     : "==" >
+| < S_LT        : "<" >
+| < S_LTOE      : "<=" >
+}
+
+void programm() throws SemanticException :
+{
+	ExecutableItem  i=null;
+}
+{
+  ( i=statement() { i.execute(); } )*
+  <EXIT> <S_SEMICOLON>
+}
+
+ExecutableItem statement() throws SemanticException :
+{
+	ExecutableItem  i=null;
+}
+{
+  i=print() { return i; }
+| i=define_set()  { return i; }
+| i=define_var()  { return i; }
+| i=delete()  { return i; }
+| i=foreach_loop()  { return i; }
+| i=if_then_statement()  { return i; }
+| i=add_element_statement()  { return i; }
+| i=block()  { return i; }
+}
+
+ExecutableItem block() throws SemanticException :
+{
+	ExecutableBlock b=new ExecutableBlock();
+	ExecutableItem  i=null;
+}
+{
+  (
+    <BEGIN> ( i=statement() { b.addItem(i); } )*  <END>
+  ) { return b; }
+
+}
+
+ExecutableItem print() throws SemanticException
+ :
+{
+  Token t;
+  Evaluable<SetElement> i;
+  Print p = new Print();
+}
+{
+    t=<PRINT> i=printable_element(t.beginLine, t.beginColumn) { p.addItem(i); } ( t=<S_AMPERSAND> i=printable_element(t.beginLine, t.beginColumn) { p.addItem(i); } )* <S_SEMICOLON>
+	{
+	  return p;
+	}
+}
+
+Evaluable<SetElement> printable_element(int line, int col) throws SemanticException
+ :
+{
+  String s="";
+  Set set=null;
+  Evaluable<SetElement> item;
+  Evaluable<SetElement> e;
+  Evaluable<Set> es;
+}
+{
+    (
+      s=string_value() { item = new ResolveConstant<SetElement>(new StringElement(s)); }
+//    | es=set_operand() { item=new UnaryOperation<Set,String>(es, new ConvertSet2String()); }
+    | es=set_operation() { item=new UnaryOperation<Set,SetElement>(es, new ConvertSet2String()); }
+//    | set=sharp_set() { item=new UnaryOperation<Set,String>(new ResolveConstant<Set>(set), new ConvertSet2String());  }
+//    | set=fuzzy_set() { item=new UnaryOperation<Set,String>(new ResolveConstant<Set>(set), new ConvertSet2String());  }
+//    | s=set_identifier() { item=new UnaryOperation<Set,String>(new ResolveVariable<Set>(s, _setStore), new ConvertSet2String());  }
+	  | s=set_identifier()
+		{
+		  try
+		  {
+		    es = new ResolveVariable<Set>(s, _setStore);
+		    item=new UnaryOperation<Set,SetElement>(es, new ConvertSet2String());
+		  } catch(Exception ex) {
+			  throw new SemanticException(ex.getMessage(), line, col);
+		  }
+		}
+    | item=expression(line, col) 
+//    | e=expression(line, col) { item=new UnaryOperation<SetElement,String>(e, new ConvertSetElement2String()); }
+    )
+	{
+	  return item;
+	}
+}
+
+ExecutableItem define_set() throws SemanticException :
+{
+  Set set;
+  String s;
+  Token t;
+  Evaluable<Set> e;
+}
+{
+  s = set_identifier() t=<S_DEF>
+  (
+//    set=sharp_set() { e = new ResolveConstant<Set>(set); }
+//  | set=fuzzy_set() { e = new ResolveConstant<Set>(set); }
+  e=set_operand()
+  )
+  <S_SEMICOLON>
+  {
+    return new VariableDefinition<Set>(s, e, _setStore);
+  }
+}
+
+ExecutableItem define_var() throws SemanticException
+:
+{
+  Token t;
+  String s, sv;
+  Evaluable<SetElement> c;
+  SetElement e;
+}
+{
+  s=var_identifier() t=<S_DEF>
+  (
+	c=expression(t.beginLine, t.beginColumn)
+|   sv=string_value() { c=new ResolveConstant<SetElement>(new StringElement(sv)); }
+  )
+  <S_SEMICOLON>
+  {
+    return new VariableDefinition<SetElement>(s, c, _varStore);
+  }
+}
+
+ExecutableItem delete() throws SemanticException :
+{
+  Set set;
+  String s;
+  Token t;
+  VariableDelete<?> retVal;
+}
+{
+  t=<DELETE>
+  (
+    s = set_identifier() 
+  	{
+  	  retVal=new VariableDelete<Set>(s, _setStore);
+//    		throw new SemanticException(s + " is undefined!", t.beginLine, t.beginColumn);
+  	}
+ | s = var_identifier()
+  	{
+  	  retVal=new VariableDelete<SetElement>(s, _varStore);
+//    		throw new SemanticException(s + " is undefined!", t.beginLine, t.beginColumn);
+  	}
+ )
+  <S_SEMICOLON> { return retVal; }
+}
+
+SharpSet sharp_set() throws SemanticException
+:
+{
+  Token t;
+  SharpSet retVal=null;
+}
+{
+  	(
+ 		t=<S_OCB> ( retVal=sharp_set_element_list(t.beginLine, t.beginColumn) )? <S_CCB >
+	)
+	{
+  		if(retVal==null)
+  			return new SharpSet();
+  		else
+  			return retVal;
+	}
+}
+
+SharpSet sharp_set_element_list(int line, int col) throws SemanticException
+:
+{
+  ArrayList<SetElement> retVal = new ArrayList<SetElement>();
+  SharpSet set = null;
+  SetElement e = null;
+}
+{
+  (
+    ( e=sharp_set_element() { retVal.add(e); } ( <S_COMMA> e=sharp_set_element() { retVal.add(e); } )* )
+  )
+	{
+	  	try
+	  	{
+	  	  set = new SharpSet(retVal);
+	  	} catch(Exception ex)
+	  	{
+	  	  throw new SemanticException(ex.getMessage(), line, col);
+	  	}
+		return set;
+	}
+}
+
+SetElement sharp_set_element()
+ :
+{
+  SetElement retVal = null;
+  int i;
+  BigDecimal n;
+  String s;
+  PairElement p;
+  boolean b;
+}
+{
+  (
+  s=element_identifier() { retVal = new StringElement(s); }
+| i=integer_value() { retVal = new IntegerElement(i); }
+| n=number_value() { retVal = new DecimalElement(n);}
+| p=sharp_pair_element() { retVal = p; }
+) { return retVal; }
+}
+
+PairElement sharp_pair_element()
+ :
+{
+  SetElement lhs, rhs;
+}
+{
+	<S_OB> lhs=sharp_set_element() <S_COMMA> rhs=sharp_set_element() <S_CB>
+	{
+	  return new PairElement(lhs, rhs);
+	}
+}
+
+FuzzySet fuzzy_set() throws SemanticException
+:
+{
+  FuzzySet retVal=null;
+  Token t;
+}
+{
+  	(
+ 		<S_HASH> t=<S_OCB> ( retVal=fuzzy_set_element_list(t.beginLine, t.beginColumn) )? <S_CCB >
+	)
+	{
+  		if(retVal==null)
+  			return new FuzzySet();
+  		else
+  			return retVal;
+	}
+}
+
+FuzzySet fuzzy_set_element_list(int line, int col) throws SemanticException
+:
+{
+  ArrayList<FuzzyElement> retVal = new ArrayList<FuzzyElement>();
+  FuzzyElement e = null;
+  SetElement lhs;
+  FuzzySet set = null;
+}
+{
+  (
+    ( e=fuzzy_set_element() { retVal.add(e); } ( <S_COMMA> e=fuzzy_set_element() { retVal.add(e); } )* )
+  | ( lhs=sharp_set_element() { retVal.add(new FuzzyElement(lhs, BigDecimal.ONE)); } ( <S_COMMA> lhs=sharp_set_element() { retVal.add(new FuzzyElement(lhs, BigDecimal.ONE)); } )* )
+  )
+	{
+	  	try
+	  	{
+	  	  set = new FuzzySet(retVal);
+	  	} catch(Exception ex)
+	  	{
+	  	  throw new SemanticException(ex.getMessage(), line, col);
+	  	}
+  		return set;
+	}
+}
+
+FuzzyElement fuzzy_set_element()
+ :
+{
+  SetElement lhs;
+  BigDecimal rhs=null;
+  int rhs_i=-1;
+}
+{
+  
+  (
+	<S_OSB> lhs=sharp_set_element() <S_COMMA> (rhs=number_value() | rhs_i=integer_value() ) <S_CSB>
+	{
+	  if(rhs==null) rhs=new BigDecimal(rhs_i);
+	  return new FuzzyElement(lhs, rhs);
+	}
+  )
+}
+
+Evaluable<Set> set_operation() throws SemanticException
+:
+{
+  Evaluable<Set> retVal;
+  Evaluable<SetElement> element;
+  Evaluable<Set> lhs, rhs=null, set;
+  Token t=null;
+  BinaryOperator<Set, SetElement, Set> op;
+}
+{
+  try
+  {
+	  	t=<CREATE>
+  		(
+  			( <CARTESIAN> <PRODUCT> <OF> lhs=set_operand() <AND> rhs=set_operand() )
+  				{
+	  			  retVal=new BinaryOperation<Set,Set,Set>(lhs, rhs, new CartesianProduct() );
+  				}
+| 			( <INTERSECTION> <OF> lhs=set_operand() <AND> rhs=set_operand() )
+				{
+				  retVal=new BinaryOperation<Set,Set,Set>(lhs, rhs, new Intersection() );
+				}
+| 			( <SYMMETRIC> <COMPLEMENT> <OF> lhs=set_operand() <AND> rhs=set_operand() )
+				{
+					retVal=new BinaryOperation<Set,Set,Set>(lhs, rhs, new SymmetricComplement() );
+				}
+|	 		( <UNION> <OF> lhs=set_operand() <AND> rhs=set_operand() )
+				{
+				  	retVal=new BinaryOperation<Set,Set,Set>(lhs, rhs, new Union() );
+				}
+|	 		( <COMPLEMENT> <OF> lhs=set_operand() ( <USING> rhs=set_operand() <AS> <BASIC> <SET> )? )
+				{
+				  if(rhs==null)
+				  	retVal=new UnaryOperation<Set,Set>(lhs, new UnaryComplement() );
+				  else
+				  	retVal=new BinaryOperation<Set,Set,Set>(lhs, rhs, new BinaryComplement() );
+				}
+		)
+	{ return retVal; }
+  } catch(Exception ex)
+  {
+    throw new SemanticException(ex.getMessage(), t.beginLine, t.beginColumn);
+  }
+}
+
+
+Evaluable<Set> set_operand() throws SemanticException
+:
+{
+  String s;
+  Evaluable<Set> retVal = null;
+  Set set;
+}
+{
+  (
+  s=set_identifier() { retVal=new ResolveVariable<Set>(s, _setStore); }
+| set = sharp_set() { retVal=new ResolveConstant<Set>(set); }
+| set = fuzzy_set() { retVal=new ResolveConstant<Set>(set); }
+| <S_OB> retVal = set_operation() <S_CB>
+) { return retVal; }
+}
+
+String element_identifier()
+:
+{
+  Token t;
+  String retVal;
+}
+{
+  (
+	t = <ELEMENT_IDENTIFIER> { retVal=t.image; }
+  ) { return retVal; }
+}
+
+int integer_value()
+:
+{
+  Token t;
+  int retVal;
+}
+{
+  (
+	t = <INTEGER> { retVal = Integer.parseInt(t.image); }
+  ) { return retVal; }
+}
+
+BigDecimal number_value()
+:
+{
+  Token t;
+  BigDecimal retVal;
+}
+{
+  (
+	t = <NUMBER> { retVal = new BigDecimal(t.image); }
+  ) { return retVal; }
+}
+
+String string_value()
+:
+{
+  Token t;
+  String retVal;
+}
+{
+  (
+	t = <STRING> { retVal = new String(t.image); }
+  )
+  {
+    retVal=retVal.substring(1, retVal.length()-1);
+    return retVal;
+  }
+}      
+
+String set_identifier()
+:
+{
+  Token t;
+  String retVal;
+}
+{
+  (
+	t = <SET_IDENTIFIER> { retVal = new String(t.image); }
+  )
+  {
+    return retVal;
+  }
+}
+
+String var_identifier()
+:
+{
+  Token t;
+  String retVal;
+}
+{
+  (
+	t = <VAR_IDENTIFIER> { retVal = new String(t.image); }
+  )
+  {
+    return retVal;
+  }
+}
+
+Evaluable<SetElement> expression(int line, int col) throws SemanticException
+:
+{
+  Token t;
+  BinaryOperator<SetElement, SetElement, SetElement> op;
+  Evaluable<SetElement> l=null,r=null;
+}
+{
+  l=term(line, col)
+  (
+    (
+      	t=<S_PLUS>  { op = new Addition(); }
+      | t=<S_MINUS> { op = new Subtraction(); }
+      | t=<OR> { op = new Or(); }
+      | t=<XOR> { op = new Xor(); }
+    )
+    r=term(t.beginLine, t.beginColumn)
+    { l = new BinaryOperation<SetElement,SetElement,SetElement>(l, r, op); }
+  )*
+  {
+	  return l;
+  }
+}
+
+Evaluable<SetElement> term(int line, int col) throws SemanticException
+:
+{
+  Token t;
+  Evaluable<SetElement> l=null,r=null;
+  String s;
+  BinaryOperator<SetElement, SetElement, SetElement> op;
+}
+{
+  l=compare_term(line, col)
+  (
+	  (
+    	(
+    	  t=<S_MULTIPLY> { op = new Product(); }
+    	| t=<S_DIVIDE> { op = new Division(); }
+        | t=<AND>     { op = new And(); }
+    	)
+    	r=compare_term(t.beginLine, t.beginColumn)
+    	{ l = new BinaryOperation<SetElement,SetElement,SetElement>(l, r, op); }
+  	  )*
+  )
+  { return l; }
+}
+
+Evaluable<SetElement> compare_term(int line, int col) throws SemanticException
+:
+{
+  Token t;
+  Evaluable<SetElement> l=null,r=null;
+  String s;
+  BinaryOperator<SetElement, SetElement, SetElement> op;
+}
+{
+  l=unary_operation(line, col)
+  (
+	  (
+    	(
+ 	      t=<S_GT>    { op = new GreaterThan(); }
+	    | t=<S_GTOE>  { op = new GreaterThanOrEqual(); }
+	    | t=<S_EQUAL> { op = new Equal(); }
+	    | t=<S_LT>    { op = new LessThan(); }
+ 	    | t=<S_LTOE>  { op = new LessThanOrEqual(); }
+    	)
+    	r=unary_operation(t.beginLine, t.beginColumn)
+    	{ l = new BinaryOperation<SetElement,SetElement,SetElement>(l, r, op); }
+  	  )*
+  )
+  { return l; }
+}
+
+Evaluable<SetElement> unary_operation(int line, int col)  throws SemanticException
+:
+{
+  Evaluable<SetElement> c=null;
+  Token t;
+}
+{
+  (
+	t=< S_MINUS > c=expression_element(t.beginLine, t.beginColumn) { c=new UnaryOperation<SetElement,SetElement>(c, new Negate()); }
+| 	t=< NOT > c=expression_element(t.beginLine, t.beginColumn) { c=new UnaryOperation<SetElement,SetElement>(c, new Not()); }
+| 	c=expression_element(line, col)
+  )
+  { return c; }
+}
+
+Evaluable<SetElement> expression_element(int line, int col) throws SemanticException
+:
+{
+  Token t;
+  Evaluable<SetElement> c=null;
+  BooleanElement b;
+  int i;
+  BigDecimal n=null;
+  String s;
+  Set set;
+}
+{
+  (
+	i=integer_value() {c=new ResolveConstant<SetElement>(new DecimalElement(i));}
+|   n=number_value() {c=new ResolveConstant<SetElement>(new DecimalElement(n));}
+|   b=boolean_value() {c=new ResolveConstant<SetElement>(b);}
+|   s=element_identifier() {c=new ResolveConstant<SetElement>(new StringElement(s));}
+|   s=var_identifier()
+		{
+		  try
+		  {
+		    c = new ResolveVariable<SetElement>(s, _varStore);
+		  } catch(Exception ex) {
+			  throw new SemanticException(ex.getMessage(), line, col);
+		  }
+		}
+|   t=<S_OB> c=expression(t.beginLine, t.beginColumn) <S_CB>
+|   c=boolean_set_operation()
+|   c=arithmetic_set_operation()
+|   c=getElementFromPair()
+|   c=createFuzzyElement()
+|   c=createPairElement()
+|   c=round()
+|   set=sharp_set() { c=new UnaryOperation<Set,SetElement>(new ResolveConstant<Set>(set), new ConvertSet2String());  }
+|   set=fuzzy_set() { c=new UnaryOperation<Set,SetElement>(new ResolveConstant<Set>(set), new ConvertSet2String());  }
+  )
+  { return c; }
+}
+
+BooleanElement boolean_value()
+:
+{
+  boolean b;
+  BooleanElement retVal;
+}
+{
+  (
+	<TRUE> { b = true; }
+|   <FALSE> { b = false; }
+  )
+  {
+   	retVal = new BooleanElement(b);
+  	return retVal;
+  }
+}
+
+Evaluable<SetElement> boolean_set_operation() throws SemanticException
+:
+{
+  Evaluable<SetElement> retVal;
+  Evaluable<Set> op1, op2, op3=null;
+  Token t=null;
+}
+{
+  <SET> op1=set_operand() <IS>
+  (
+  <EMPTY>
+    {
+      retVal=new UnaryOperation<Set,SetElement>(op1, new IsEmpty() );
+    }
+| <INTERSECTION> <OF> op2=set_operand() <WITH> op3=set_operand()
+	{
+	  retVal=new TernaryOperation<Set,SetElement>(op1, op2, op3, new IsIntersection() );
+	}
+| <UNION> <OF> op2=set_operand() <WITH> op3=set_operand()
+    {
+      retVal=new TernaryOperation<Set,SetElement>(op1, op2, op3, new IsUnion() );
+    }
+| <SUBSET> <OF> op2=set_operand()
+	{
+	  retVal=new BinaryOperation<Set,Set,SetElement>(op1, op2, new IsSubset() );
+	}
+| <SYMMETRIC> <COMPLEMENT> <OF> op2=set_operand() <WITH> op3=set_operand()
+	{
+	  retVal=new TernaryOperation<Set,SetElement>(op1, op2, op3, new IsSymmetricComplement() );
+	}
+| <EQUAL> <TO> op2=set_operand()
+	{
+	  retVal=new BinaryOperation<Set,Set,SetElement>(op1, op2, new IsEqual() );
+	}
+| ( <COMPLEMENT> <OF> op2=set_operand() ( <WITH> op3=set_operand() )? )
+			{
+			  if(op3==null)
+			  	retVal=new BinaryOperation<Set,Set,SetElement>(op1, op2, new IsUnaryComplement() );
+			  else
+			  	retVal=new TernaryOperation<Set,SetElement>(op1, op2, op3, new IsBinaryComplement() );
+			}
+  )
+  {
+    return retVal;
+  }
+}
+
+Evaluable<SetElement> arithmetic_set_operation() throws SemanticException
+:
+{
+  Evaluable<SetElement> retVal;
+  Evaluable<Set> set=null;
+}
+{
+  <GET>
+  (
+   <CARDINAL> <VALUE> <OF> set=set_operand()
+    	{
+      		retVal=new UnaryOperation<Set,SetElement>(set, new GetCardinalValue() );
+    	}
+ | <ABSOLUTE> <VALUE> <OF> set=set_operand()
+    	{
+      		retVal=new UnaryOperation<Set,SetElement>(set, new GetAbsoluteValue() );
+    	}
+ | <AVERAGE> <ABSOLUTE> <VALUE> <OF> set=set_operand()
+    	{
+      		retVal=new UnaryOperation<Set,SetElement>(set, new GetAverageValue() );
+    	}
+  )
+  {
+    return retVal;
+  }
+}
+
+Evaluable<SetElement> round() throws SemanticException
+:
+{
+  Evaluable<SetElement> e=null;
+  int i;
+  Token t;
+}
+{
+  <ROUND> t=<S_OB> e=expression(t.beginLine, t.beginColumn) <S_COMMA> i=integer_value() <S_CB> 
+		{
+		    Evaluable<SetElement> digits = new ResolveConstant(new IntegerElement(i));
+      		return new BinaryOperation<SetElement,SetElement,SetElement>( e, digits, new Round() );
+    	}
+}
+
+Evaluable<SetElement> getElementFromPair() throws SemanticException
+:
+{
+  Evaluable<SetElement> e=null;
+  UnaryOperator<SetElement,SetElement> op=null;
+  Token t;
+}
+{
+  (	<RIGHT> { op = new GetRightPairElement(); } | <LEFT> { op = new GetLeftPairElement(); } )  t=<S_OB> e=expression(t.beginLine, t.beginColumn) <S_CB> 
+		{
+      		return new UnaryOperation<SetElement,SetElement>( e, op );
+    	}
+}
+
+Evaluable<SetElement> createFuzzyElement() throws SemanticException
+:
+{
+  Evaluable<SetElement> left, rigth;
+  UnaryOperator<SetElement,SetElement> op=null;
+  Token t;
+}
+{
+  <FUZZY_ELEMENT> t=<S_OB> left=expression(t.beginLine, t.beginColumn) t=<S_COMMA> rigth=expression(t.beginLine, t.beginColumn) <S_CB> 
+		{
+      		return new BinaryOperation<SetElement,SetElement,SetElement>( left, rigth, new CreateFuzzyElement() );
+    	}
+}
+
+Evaluable<SetElement> createPairElement() throws SemanticException
+:
+{
+  Evaluable<SetElement> left, rigth;
+  UnaryOperator<SetElement,SetElement> op=null;
+  Token t;
+}
+{
+  <PAIR_ELEMENT> t=<S_OB> left=expression(t.beginLine, t.beginColumn) t=<S_COMMA> rigth=expression(t.beginLine, t.beginColumn) <S_CB> 
+		{
+      		return new BinaryOperation<SetElement,SetElement,SetElement>( left, rigth, new CreatePairElement() );
+    	}
+}
+
+ExecutableItem foreach_loop() throws SemanticException
+:
+{
+  String varName;
+  ExecutableItem execute;
+  Evaluable<Set> set;
+  Evaluable<SetElement> condition=null;
+  Token t=null;
+}
+{
+  < FOR > <EACH > varName=var_identifier() < FROM > set=set_operand() ( t=<WHERE> condition=expression(t.beginLine, t.beginColumn) )? <DO> execute=statement()
+  {
+    return new ForEachLoop(varName, set, condition, execute, _varStore);
+  }
+}
+
+ExecutableItem if_then_statement() throws SemanticException
+:
+{
+  ExecutableItem then_statement, else_statement=null;
+  Evaluable<SetElement> condition=null;
+  Token t=null;
+}
+{
+  t=<IF> condition=expression(t.beginLine, t.beginColumn) <THEN> then_statement=block() ( <ELSE> else_statement=block() )?
+  {
+    return new IfThenElseStatement(condition, then_statement, else_statement);
+  }
+}
+
+ExecutableItem add_element_statement() throws SemanticException
+:
+{
+  Evaluable<Set> retVal;
+  Evaluable<SetElement> element;
+  Evaluable<Set> set;
+  SetElement e;
+  Token t=null;
+  BinaryOperator<Set, SetElement, Set> op;
+}
+{
+  try
+  {
+ 	(
+  		t=<ADD>
+  		(
+    	  element=expression(t.beginLine, t.beginColumn)
+//  		  e=sharp_set_element() { element=new ResolveConstant<SetElement>(e); }
+//  		  | e=fuzzy_set_element() { element=new ResolveConstant<SetElement>(e); }
+  		) <AS> <ELEMENT> <TO > <SET> set=set_operand() <S_SEMICOLON>
+  		{
+  		  retVal=new BinaryOperation<Set,SetElement,Set>(set, element, new AddElement());
+  		}	
+	)
+	{
+	  return new AddElementStatement(retVal);
+	}
+  } catch(Exception ex)
+  {
+    throw new SemanticException(ex.getMessage(), t.beginLine, t.beginColumn);
+  }
+}
+

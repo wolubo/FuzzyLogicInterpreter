@@ -1,0 +1,87 @@
+A := 3;
+print "A ist " & A;
+A := A;
+A := A*5/2;
+print "A ist " & A;
+B := A+1;
+print "B ist " & B;
+print -3*(5+6.511)/2.35;
+
+$A := { d, e, f, g, h };
+$B := { a, b, c, d, e, f, g };
+$C := { a, d, e, f, g };
+$D := { (a,a), (a,b), (a,c) };
+$F := #{ [af,0.1], [bf,0.75], [cf,1] };
+$G := #{ [bf,0.7], [gb, 0.1], [cf,0.4], [af,0.2], [gf, 0.8] };
+
+$US := ( create union of $B and $C );
+$CP := ( create cartesian product of $A and $B );
+$IS := ( create intersection of $B and $C );
+$SC := ( create symmetric complement of $B and $C );
+$CS := ( create complement of $C using $B as basic set );
+
+print "A:  " & $A;
+print "B:  " & $B;
+print "C:  " & $C;
+print "D:  " & $D;
+
+print "";
+
+print "CP: " & $CP;
+print "IS: " & $IS;
+print "SC: " & $SC;
+print "US: " & $US;
+print "CS: " & $CS;
+print create complement of $D using $CP as basic set;
+
+print "";
+
+delete $CS;
+$CS := ( create complement of $C using $B as basic set );
+print $CS;
+print "CS: " & $CS;
+
+print "";
+
+print "F:  " & $F;
+$FCS := ( create complement of $F );
+print "FCS: " & $FCS;
+
+print "";
+
+delete $FCS;
+print "F:  " & $F;
+print "G:  " & $G;
+$FCS := ( create complement of $F using $G as basic set );
+print "Complement of F with G: " & $FCS;
+
+print "";
+
+$FCP := ( create cartesian product of $F and $G );
+print "Cartesian product of F and G: " & $FCP;
+
+print "";
+
+$FIS := ( create intersection of $F and $G );
+print "Intersection of F and G: " & $FIS;
+
+print "";
+
+print "Complement of F: " & create complement of $F;
+print "Complement of G: " & create complement of $G;
+print "Union of the complements: " & create union of (create complement of $F) and (create complement of $G);
+$FSC := ( create symmetric complement of $F and $G );
+print "Symmetric complement of F and G: " & $FSC;
+
+print "";
+
+print "Complement of F against G: " & create complement of $F using $G as basic set;
+print "Complement of G against F: " & create complement of $G using $F as basic set;
+print "Union of the complements: " & create union of (create complement of $F using $G as basic set) and (create complement of $G using $F as basic set);
+
+print "";
+
+$FUS := ( create union of $F and $G );
+print "Union of F and G: " & $FUS;
+
+exit;

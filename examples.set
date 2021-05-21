@@ -1,0 +1,273 @@
+//*****************************************************************************
+// 3.2 Ausdrücke
+print "";
+print "3.2 Ausdrücke";
+
+A := true;
+B := false;
+$A := #{ [a,0.1], [b,0.75] };
+$B := #{ [a,0.9], [b,0.25] };
+
+
+//*****************************************************************************
+// 3.2.1 Logische Ausdrücke
+print "";
+print "3.2.1 Logische Ausdrücke";
+
+print "";
+print "logische Operationen";
+print A and true;
+print A or B;
+print A xor B;
+print not B;
+
+print "";
+print "Vergleichsoperationen";
+print 7 > 5;
+print 5 < 7;
+print 7 == ( 5 + 2 );
+print 7 >= 5;
+print 5 <= 7;
+
+print "";
+print "Mengenoperationen";
+print set { } is empty;
+print not set { a } is empty;
+print set #{ [a,0.1], [b,0.25] } is intersection of $A with $B;
+print set #{ [a,0.9], [b,0.75] } is union of $A with $B;
+print set #{ [a,0.05] } is subset of $A;
+print set #{ [a,0.8],[b,0.5] } is symmetric complement of $A with $B;
+print set $A is complement of $B;
+print set #{ [a,0], [b,0.50] } is complement of $A with $B;
+print set $A is equal to $A;
+
+
+//*****************************************************************************
+// 3.2.2 arithmetische Ausdrücke
+print "";
+print "3.2.2 arithmetische Ausdrücke";
+
+print "";
+print "Operationen";
+print 1 + 3;
+print 1 - 3;
+print 5 * 3;
+print 5.0 / 3.0;
+
+print "";
+print "Mengenoperationen";
+print get cardinal value of $A;
+print get absolute value of $A;
+print get average absolute value of $A;
+
+
+//*****************************************************************************
+// 3.2.3 komplexe Ausdrücke
+print "";
+print "3.2.3 komplexe Ausdrücke";
+
+print B or A xor B and B;
+print B or ( A xor B ) and B;
+print ( get average absolute value of $A * 15 - 3 ) / 8;
+
+
+//*****************************************************************************
+// 3.3.1 Ausgaben mit print
+print "";
+print "3.3.1 Ausgaben mit print";
+
+print "Hallo Welt!";
+print 3 + 7;
+print { 1, 2, 5, 4711 };
+print #{ [a,0.1], [b,0.75], [c,1] };
+print create complement of #{ [a,0.1], [b,0.75], [c,1] };
+$A := { 1, 2, 4, 6, 5};
+$B := { 2, 5, 7, 11 };
+print $A;
+print $A & " geschnitten " & $B & " ergibt: " & create intersection of $A and $B;
+
+
+//*****************************************************************************
+// 3.3.2 Variablendefinition
+print "";
+print "3.3.2 Variablendefinition";
+
+$C := #{ [a,0.1], [b,0.75], [c,1] };
+
+$CS := ( create complement of $C ); 
+print "Das Komplement von " & $C & " ist " & $CS;
+
+Y := 3 + 7; 
+print "3+7=" & Y;
+
+A := true;
+B := false;
+Z := A xor B; print "true xor false = " & Z;
+
+
+//*****************************************************************************
+// 3.3.3 Löschen einer Variablen
+print "";
+print "3.3.3 Löschen einer Variablen";
+
+delete $A;
+delete $B;
+delete $C;
+delete $CS;
+delete A;
+delete B;
+delete Z;
+
+
+//*****************************************************************************
+// 3.3.4 For-Each-Schleife
+print "";
+print "3.3.4 For-Each-Schleife";
+
+$A := { 1, 2, 4, 6, 5, 0, 14, 28};
+
+XSUM:=0;
+print "$A:=" & $A;
+for each X from $A do XSUM:=XSUM+X; 
+print "Die Summe über alle Elemente von $A ist " & XSUM;
+
+XSUM:=0;
+for each X from $A where X>5 and X<20 do 
+begin
+	XSUM:=XSUM+X;
+end 
+print "Die Summe über alle Elemente von $A, die >5 und <20 sind, ist " & XSUM;
+
+delete A;
+delete XSUM;
+
+
+//*****************************************************************************
+// 3.3.5 If-Then-Else
+print "";
+print "3.3.5 If-Then-Else";
+
+A := 4712;
+
+if not (A==4711) then begin
+	print "Das ist nicht 4711!";
+end 
+
+if (A==4711) 
+then begin
+	print "Das ist 4711!";
+end
+else begin 
+	print "Das ist nicht 4711!";
+end
+
+delete A;
+
+
+//*****************************************************************************
+// 3.3.6 Add-Element
+print "";
+print "3.3.6 Add-Element";
+
+$A := { a, c };
+print "$A vorher " & $A;
+add b as element to set $A;
+print "$A nachher " & $A;
+delete $A;
+
+
+//*****************************************************************************
+// 3.3.7 Anweisungsblöcke
+print "";
+print "3.3.7 Anweisungsblöcke";
+
+begin
+	print "erste Anweisung im Block";
+	print "zweite Anweisung im Block";
+end 
+
+
+//*****************************************************************************
+// 3.4 Mengenoperationen
+print "";
+print "3.4 Mengenoperationen";
+
+$A := { a, b };
+$B := { b, c };
+$C := #{ [a,0.1], [b,0.75] };
+$D := #{ [a,0.9], [b,0.25] };
+
+ 
+//*****************************************************************************
+// 3.4.1 Vereinigungsmenge
+print "";
+print "3.4.1 Vereinigungsmenge";
+
+print create union of $A and $B;
+print create union of $C and $D;
+
+
+//*****************************************************************************
+// 3.4.2 Schnittmenge
+print "";
+print "3.4.2 Schnittmenge";
+
+print create intersection of $A and $B;
+print create intersection of $C and $D;
+
+
+//*****************************************************************************
+// 3.4.3 Kartesisches Produkt
+print "";
+print "3.4.3 Kartesisches Produkt";
+
+print create cartesian product of $A and $B;
+print create cartesian product of $C and $D;
+
+
+//*****************************************************************************
+// 3.4.4 unäres Komplement
+print "";
+print "3.4.4 unäres Komplement";
+
+print create complement of $A;
+print create complement of $C;
+
+
+//*****************************************************************************
+// 3.4.5 binäres Komplement
+print "";
+print "3.4.5 binäres Komplement";
+
+print create complement of $A using $B as basic set;
+print create complement of $C using $D as basic set;
+
+
+//*****************************************************************************
+// 3.4.6 Symmetrisches Komplement
+print "";
+print "3.4.6 Symmetrisches Komplement";
+
+print create symmetric complement of $A and $B;
+print create symmetric complement of $C and $D;
+
+
+//*****************************************************************************
+// 3.4.7 verschachtelte Mengenoperationen
+print "";
+print "3.4.7 verschachtelte Mengenoperationen";
+
+print create union of ( create intersection of $A and $B ) and { d, f };
+
+delete $A;
+delete $B;
+delete $C;
+delete $D;
+
+
+//*****************************************************************************
+// 3.3.8 Exit
+print "";
+print "3.3.8 Exit";
+
+exit;
