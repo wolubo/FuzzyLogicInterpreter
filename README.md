@@ -2,7 +2,7 @@
 
 Das Programm erlaubt die Definition von Mengen und die Anwendung von Operationen auf diese Mengen. Die Kommandos werden entweder direkt von der Standardeingabe gelesen und sofort ausgeführt oder zeilenweise aus einer Textdatei entnommen, deren Dateiname beim Programmstart als Parameter angegeben wird. Jede Eingabe schließt mit einem Semikolon und dem Zeilenende ab. Die Ausgaben des Programms erfolgen über die Standardausgabe.
 
-**Benutzung des Programms**
+**Benutzung des Programms**  
 Start des Programms:
 ````
 java -jar FuzzySetInterpreter.jar
