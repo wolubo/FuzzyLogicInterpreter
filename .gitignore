@@ -1,5 +1,10 @@
+.DS_Store
+/.idea/
 .gradle
+/gradle/
 /build/
+/gradlew
+/gradlew.bat
 
 # Ignore Gradle GUI config
 gradle-app.setting
@@ -12,4 +17,3 @@ gradle-app.setting
 
 # # Work around https://youtrack.jetbrains.com/issue/IDEA-116898
 # gradle/wrapper/gradle-wrapper.properties
-.DS_Store
