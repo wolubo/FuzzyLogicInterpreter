@@ -13,5 +13,5 @@ java -jar FuzzySetInterpreter.jar test.set
 ````
 Wenn keine Datei angegeben wird, verarbeitet das Programm Eingaben aus der Standardeingabe. Jede vollständig eingegebene Anweisung wird verarbeitet, sobald die Return-Taste betätigt wird. Mit der Anweisung exit; wird das Programm verlassen. Es sind drei Beispiel-Dateien vorhanden: *examples.set*, *test.set* und *supermarkt.set*.
 
-**Die Kommandos der Skriptsprache**
+**Die Kommandos der Skriptsprache**  
 Die Skriptsprache ist im Dokument *Dokumentation.docx* beschrieben.
